@@ -8,10 +8,7 @@ jobs:
   docker-test:
     name: FutureVuls Docker Image Scan
     env:
-      FVULS_AUTH_URL: "https://auth.vuls.biz/one-time-auth"
-      FVULS_GROUP_ID: ${{ secrets.FVULS_GROUP_ID }}
-      FVULS_SERVER_UUID: ${{ secrets.FVULS_SERVER_UUID }}
-      FVULS_TOKEN: ${{ secrets.FVULS_TOKEN }}
+
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
@@ -40,12 +37,14 @@ jobs:
         tar zxvf future-vuls_${VULS_VERSION}_linux_amd64.tar.gz
     - name: scan core-rpc-server by trivy
       env: 
+        FVULS_AUTH_URL: "https://auth.vuls.biz/one-time-auth"
+        FVULS_GROUP_ID: ${{ secrets.FVULS_GROUP_ID }}
+        FVULS_SERVER_UUID: ${{ secrets.FVULS_SERVER_UUID }}
+        FVULS_TOKEN: ${{ secrets.FVULS_TOKEN }}
         IMAGE_NAME: "nginx"
       run: |
         docker build -t ${IMAGE_NAME} .
         set -eo pipefail
-        echo ${FVULS_GROUP_ID}
-        echo ${FVULS_TOKEN}
-        # ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
-        #./trivy-to-vuls parse --stdin | \
-        #./future-vuls upload --stdin --url ${FVULS_AUTH_URL} --group-id ${FVULS_GROUP_ID} --token ${FVULS_TOKEN} --uuid ${FVULS_SERVER_UUID}
+        ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
+        ./trivy-to-vuls parse --stdin | \
+        ./future-vuls upload --stdin --url ${FVULS_AUTH_URL} --group-id ${FVULS_GROUP_ID} --token ${FVULS_TOKEN} --uuid ${FVULS_SERVER_UUID}
