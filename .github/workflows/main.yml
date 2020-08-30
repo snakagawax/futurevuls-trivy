@@ -40,10 +40,9 @@ jobs:
         tar zxvf future-vuls_${VULS_VERSION}_linux_amd64.tar.gz
     - name: scan core-rpc-server by trivy
       env: 
-        DOCKERFILE_PATH: "docker/anything/Dockerfile"
         IMAGE_NAME: "nginx"
       run: |
-        docker build . -f ${DOCKERFILE_PATH} -t ${IMAGE_NAME}
+        docker build -t ${IMAGE_NAME} .
         set -eo pipefail
         ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
         ./trivy-to-vuls parse --stdin | \
