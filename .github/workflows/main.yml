@@ -7,8 +7,6 @@ defaults:
 jobs:
   docker-test:
     name: FutureVuls Docker Image Scan
-    env:
-
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v1
