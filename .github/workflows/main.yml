@@ -44,6 +44,8 @@ jobs:
       run: |
         docker build -t ${IMAGE_NAME} .
         set -eo pipefail
-        ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
+        echo ${FVULS_GROUP_ID}
+        echo ${FVULS_TOKEN}
+        # ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
         ./trivy-to-vuls parse --stdin | \
-        ./future-vuls upload --stdin --url ${FVULS_AUTH_URL} --group-id ${FVULS_GROUP_ID}  --token ${FVULS_TOKEN}  --uuid ${FVULS_SERVER_UUID}
+        ./future-vuls upload --stdin --url ${FVULS_AUTH_URL} --group-id ${FVULS_GROUP_ID} --token ${FVULS_TOKEN} --uuid ${FVULS_SERVER_UUID}
