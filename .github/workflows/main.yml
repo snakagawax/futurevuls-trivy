@@ -1,0 +1,50 @@
+name: FutureVuls Docker Image Scan
+on:
+  push
+defaults:
+  run:
+      shell: bash
+jobs:
+  docker-test:
+    name: FutureVuls Docker Image Scan
+    env:
+      FVULS_AUTH_URL: "https://auth.vuls.biz/one-time-auth"
+      FVULS_GROUP_ID: ${{ secrets.FVULS_GROUP_ID }}
+      FVULS_SERVER_UUID: ${{ secrets.FVULS_SERVER_UUID }}
+      FVULS_TOKEN: ${{ secrets.FVULS_TOKEN }}
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: cached scan db
+      uses: actions/cache@v2
+      with:
+        path: vulndb/
+        key: trivy-vulndb
+    - name: install trivy
+      env: 
+        TRIVY_VERSION: 0.8.0
+      run: |
+        wget https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+        tar zxvf trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+    - name: install trivy-to-vuls
+      env: 
+        VULS_VERSION: 0.10.0
+      run: |
+        wget https://github.com/future-architect/vuls/releases/download/v${VULS_VERSION}/trivy-to-vuls_${VULS_VERSION}_linux_amd64.tar.gz
+        tar zxvf trivy-to-vuls_${VULS_VERSION}_linux_amd64.tar.gz
+    - name: install future-vuls
+      env: 
+        VULS_VERSION: 0.10.0
+      run: |
+        wget https://github.com/future-architect/vuls/releases/download/v${VULS_VERSION}/future-vuls_${VULS_VERSION}_linux_amd64.tar.gz
+        tar zxvf future-vuls_${VULS_VERSION}_linux_amd64.tar.gz
+    - name: scan core-rpc-server by trivy
+      env: 
+        DOCKERFILE_PATH: "docker/anything/Dockerfile"
+        IMAGE_NAME: "nginx"
+      run: |
+        docker build . -f ${DOCKERFILE_PATH} -t ${IMAGE_NAME}
+        set -eo pipefail
+        ./trivy -q --cache-dir vulndb/ image -f=json ${IMAGE_NAME} | \
+        ./trivy-to-vuls parse --stdin | \
+        ./future-vuls upload --stdin --url ${FVULS_AUTH_URL} --group-id ${FVULS_GROUP_ID}  --token ${FVULS_TOKEN}  --uuid ${FVULS_SERVER_UUID}
